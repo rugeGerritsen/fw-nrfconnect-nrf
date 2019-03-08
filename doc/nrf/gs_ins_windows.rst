@@ -211,8 +211,12 @@ To update your repositories to be managed by west, make sure that they are struc
 
 Then complete the following steps:
 
-1. Open a |bash| in the ``ncs`` folder.
+1. Open a |bash| in the ``ncs\nrf`` folder.
 #. Do a ``git pull`` or rebase your branch so that you are on the latest fw-nrfconnect-nrf master.
+#. Navigate one folder level up to the ``ncs`` folder::
+
+      cd ..
+
 #. Initialize west with the manifest folder from the current branch of your ``nrf`` repository::
 
       west init -l nrf
@@ -252,8 +256,9 @@ Setting up the build environment
 ********************************
 
 If you want to build and program your applications from the command line, you must set up your build environment by defining the required environment variables every time you open a new |bash|.
+If you plan to :ref:`build with SEGGER Embedded Studio <gs_programming>`, you can skip this step.
 
-To do so, navigate to the ``ncs`` folder and enter the following command: |envfile|
+To define the environment variables, navigate to the ``ncs`` folder and enter the following command: |envfile|
 
 If you need to define additional environment variables, create the file |rcfile| and add the variables there.
 This file is loaded automatically when you run the above command.

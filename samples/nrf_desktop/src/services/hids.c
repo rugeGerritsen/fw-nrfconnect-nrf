@@ -166,10 +166,18 @@ static void feature_report_handler(struct bt_gatt_hids_rep const *rep,
 			return;
 		}
 
+		u16_t recipient = sys_get_le16(&rep->data[0]);
+		if (recipient != CONFIG_BT_GATT_DIS_PNP_PID) {
+			LOG_WRN("Drop event addressed to %x", recipient);
+			return;
+		}
+
 		struct config_event *event = new_config_event();
 
-		event->id = rep->data[0];
-		memcpy(event->data, &(rep->data[1]), sizeof(event->data));
+		event->id = rep->data[sizeof(recipient)];
+		memcpy(event->data,
+		       &rep->data[sizeof(recipient) + sizeof(event->id)],
+		       sizeof(event->data));
 		event->store_needed = true;
 
 		EVENT_SUBMIT(event);

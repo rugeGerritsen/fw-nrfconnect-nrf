@@ -1,13 +1,20 @@
 import hid
 import struct
+import time
 from enum import Enum
 
 import argparse
 import logging
 
 REPORT_ID = 4
-MOUSE_VID = 0x1915
+REPORT_SIZE = 8
+
+NORDIC_VID = 0x1915
 MOUSE_PID = 0x52DE
+DONGLE_PID = 0x52DC
+
+POLL_INTERVAL = 0.5
+POLL_MAX = 5
 
 
 class ConfigEventID(Enum):
@@ -16,17 +23,54 @@ class ConfigEventID(Enum):
     DOWNSHIFT_REST1 = 2
     DOWNSHIFT_REST2 = 3
 
+class ConfigForwardStatus(Enum):
+	PENDING = 0
+	SUCCESS = 1
+	WRITE_ERROR = 2
+	DISCONNECTED_ERROR = 3
+
 
 def check_range(value, lower, upper, value_name):
     if value > upper or value < lower:
         raise ValueError('{} {} out of range'.format(value_name, value))
 
 
-def create_report(event_id, value):
-    """ Function creating a HID feature report with 32-bit unsigned value """
+def create_report(recipient, event_id, value):
+    """ Function creating a HID feature report with 32-bit unsigned value.
+        Recipient is a device product ID. """
 
-    data = struct.pack('<BBI', REPORT_ID, event_id, value)
+    data = struct.pack('<BHBI', REPORT_ID, recipient, event_id, value)
+    assert(len(data) == REPORT_SIZE)
     return data
+
+
+def write_feature_with_check(dev, data):
+    feat_ready = ConfigForwardStatus(ConfigForwardStatus.PENDING)
+    retries = 0
+
+    while not feat_ready in (ConfigForwardStatus.SUCCESS, ConfigForwardStatus.DISCONNECTED_ERROR):
+        dev.send_feature_report(data)
+
+        time.sleep(POLL_INTERVAL)
+
+        # Checking is useful when we write to USB dongle which forward configuration via BLE.
+        response = dev.get_feature_report(REPORT_ID, REPORT_SIZE)
+        feat_ready = ConfigForwardStatus(int.from_bytes(response, byteorder='little'))
+
+        if feat_ready == ConfigForwardStatus.SUCCESS:
+            logging.info('Success {}, retries {}'.format(feat_ready, retries))
+        elif feat_ready == ConfigForwardStatus.DISCONNECTED_ERROR:
+            logging.warning('Device disconnected, dongle cannot forward.')
+            return
+        else:
+            # BLE write may fail if the requests from USB come too often. In such case, we retry.
+            logging.info('Config event lost, retry...')
+
+        retries += 1
+
+        if (retries >= POLL_MAX):
+            logging.error('Failed, too many retries')
+            return
 
 
 def configurator():
@@ -47,21 +91,13 @@ def configurator():
                              'mode to Rest 3 mode')
     args = parser.parse_args()
 
-    # Open HID device
-    dev = hid.Device(vid=MOUSE_VID, pid=MOUSE_PID)
-    logging.debug('Opened device')
-
-    if (args.cpi):
-        name = 'CPI'
-        value = args.cpi
-        check_range(value, 100, 12000, name)
-
-        event_id = ConfigEventID.MOUSE_CPI.value
-        data = create_report(event_id, value)
-
-        # Send configuration report
-        dev.send_feature_report(data)
-        logging.debug('Sent request to update {}: {}'.format(name, value))
+    # Open HID device. If mouse is not connected, try dongle
+    try:
+        dev = hid.Device(vid=NORDIC_VID, pid=MOUSE_PID)
+        logging.info("Opened nRF52 Desktop Mouse")
+    except hid.HIDException:
+        dev = hid.Device(vid=NORDIC_VID, pid=DONGLE_PID)
+        logging.info("Opened nRF52 Desktop Dongle")
 
     if (args.downshift_run):
         name = 'Downshift run time'
@@ -69,11 +105,11 @@ def configurator():
         check_range(value, 10, 2550, name)
 
         event_id = ConfigEventID.DOWNSHIFT_RUN.value
-        data = create_report(event_id, value)
+        recipient = MOUSE_PID
+        data = create_report(recipient, event_id, value)
 
-        # Send configuration report
-        dev.send_feature_report(data)
-        logging.debug('Sent request to update {}: {}'.format(name, value))
+        logging.debug('Send request to update {}: {}'.format(name, value))
+        write_feature_with_check(dev, data)
 
     if (args.downshift_rest1):
         name = 'Downshift rest1 time'
@@ -81,11 +117,11 @@ def configurator():
         check_range(value, 320, 81600, name)
 
         event_id = ConfigEventID.DOWNSHIFT_REST1.value
-        data = create_report(event_id, value)
+        recipient = MOUSE_PID
+        data = create_report(recipient, event_id, value)
 
-        # Send configuration report
-        dev.send_feature_report(data)
-        logging.debug('Sent request to update {}: {}'.format(name, value))
+        logging.debug('Send request to update {}: {}'.format(name, value))
+        write_feature_with_check(dev, data)
 
     if (args.downshift_rest2):
         name = 'Downshift rest2 time'
@@ -93,12 +129,23 @@ def configurator():
         check_range(value, 3200, 816000, name)
 
         event_id = ConfigEventID.DOWNSHIFT_REST2.value
-        data = create_report(event_id, value)
+        recipient = MOUSE_PID
+        data = create_report(recipient, event_id, value)
 
-        # Send configuration report
-        dev.send_feature_report(data)
-        logging.debug('Sent request to update {}: {}'.format(name, value))
+        logging.debug('Send request to update {}: {}'.format(name, value))
+        write_feature_with_check(dev, data)
 
+    if (args.cpi):
+        name = 'CPI'
+        value = args.cpi
+        check_range(value, 100, 12000, name)
+
+        event_id = ConfigEventID.MOUSE_CPI.value
+        recipient = MOUSE_PID
+        data = create_report(recipient, event_id, value)
+
+        logging.debug('Send request to update {}: {}'.format(name, value))
+        write_feature_with_check(dev, data)
 
 if __name__ == '__main__':
     configurator()

@@ -12,7 +12,6 @@
 #define MODULE ble_adv
 #include "module_state_event.h"
 #include "ble_event.h"
-#include "button_event.h"
 #include "power_event.h"
 
 #include <logging/log.h>
@@ -80,8 +79,6 @@ static const struct bt_data ad[] = {
  */
 static const struct bt_data sd[] = {};
 
-static bool bonds_initialized;
-static bool bonds_remove;
 static enum state state;
 
 static struct k_delayed_work adv_update;
@@ -150,7 +147,10 @@ static int ble_adv_start(void)
 	err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad),
 			      sd, ARRAY_SIZE(sd));
 
-	if (err) {
+	if (err == -ECONNREFUSED) {
+		LOG_WRN("Already connected, do not advertise");
+		err = 0;
+	} else if (err) {
 		LOG_ERR("Advertising failed to start (err %d)", err);
 	} else {
 		if (IS_ENABLED(CONFIG_DESKTOP_BLE_FAST_ADV)) {
@@ -217,30 +217,12 @@ static void init(void)
 
 static void start(void)
 {
-	int err;
-
-	if (IS_ENABLED(CONFIG_DESKTOP_BLE_BOND_REMOVAL)) {
-		if (bonds_remove) {
-			err = bt_unpair(BT_ID_DEFAULT, BT_ADDR_LE_ANY);
-			if (err) {
-				LOG_ERR("Failed to remove bonds");
-				goto error;
-			} else {
-				LOG_INF("Removed bonded devices");
-			}
-		}
-
-		bonds_initialized = true;
-	}
-
-	err = ble_adv_start();
+	int err = ble_adv_start();
 	if (err) {
-		goto error;
+		module_set_state(MODULE_STATE_ERROR);
 	}
 
 	return;
-error:
-	module_set_state(MODULE_STATE_ERROR);
 }
 
 static bool event_handler(const struct event_header *eh)
@@ -255,7 +237,7 @@ static bool event_handler(const struct event_header *eh)
 
 			init();
 			initialized = true;
-		} else if (check_state(event, MODULE_ID(config), MODULE_STATE_READY)) {
+		} else if (check_state(event, MODULE_ID(ble_bond), MODULE_STATE_READY)) {
 			static bool started;
 
 			__ASSERT_NO_MSG(!started);
@@ -343,8 +325,9 @@ static bool event_handler(const struct event_header *eh)
 			case STATE_GRACE_PERIOD:
 				err = ble_adv_stop();
 				if (!err) {
-					ble_adv_start();
+					err = ble_adv_start();
 				}
+
 				if (err) {
 					module_set_state(MODULE_STATE_ERROR);
 				} else if (was_idle) {
@@ -367,25 +350,6 @@ static bool event_handler(const struct event_header *eh)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_DESKTOP_BLE_BOND_REMOVAL)) {
-		if (is_button_event(eh)) {
-			if (bonds_initialized) {
-				return false;
-			}
-
-			const struct button_event *event =
-				cast_button_event(eh);
-
-			if ((event->key_id ==
-			    CONFIG_DESKTOP_BLE_BOND_REMOVAL_BUTTON) &&
-			    event->pressed) {
-				bonds_remove = true;
-			}
-
-			return false;
-		}
-	}
-
 	/* If event is unhandled, unsubscribe. */
 	__ASSERT_NO_MSG(false);
 
@@ -396,6 +360,3 @@ EVENT_SUBSCRIBE(MODULE, module_state_event);
 EVENT_SUBSCRIBE(MODULE, ble_peer_event);
 EVENT_SUBSCRIBE(MODULE, power_down_event);
 EVENT_SUBSCRIBE(MODULE, wake_up_event);
-#if CONFIG_DESKTOP_BLE_BOND_REMOVAL
-EVENT_SUBSCRIBE(MODULE, button_event);
-#endif /* CONFIG_DESKTOP_BLE_BOND_REMOVAL */

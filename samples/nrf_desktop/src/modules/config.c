@@ -58,6 +58,7 @@ static int settings_set(int argc, char **argv, void *val_ctx)
 	if (!loaded_data[id]) {
 		loaded_data[id] = new_config_event();
 		loaded_data[id]->id = id;
+		/* Do not store nor forward loaded config to other devices */
 		loaded_data[id]->store_needed = false;
 	}
 
@@ -199,7 +200,6 @@ static bool module_event_handler(const struct module_state_event *event)
 	}
 
 	return false;
-
 }
 
 static bool event_handler(const struct event_header *eh)
@@ -214,7 +214,6 @@ static bool event_handler(const struct event_header *eh)
 			if (event->store_needed) {
 				update_config(event->id, event->data,
 					      sizeof(event->data));
-
 			}
 
 			return false;

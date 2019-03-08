@@ -34,13 +34,13 @@ manifest:
     - name: fw-nrfconnect-zephyr
       path: zephyr
       west-commands: scripts/west-commands.yml
-      revision: a869285d262d57c382eddce928b46e3b18daa197
+      revision: 745326266d9c32ba3aa67d5af1f727059d9a88e3
     - name: fw-nrfconnect-mcuboot
       path: mcuboot
       revision: d75212468ce0f88ed57a4aacac8aa07cc8a725bc
     - name: nrfxlib
       path: nrfxlib
-      revision: 68e3ad894778a5b0ae3d8b525bd3b48abaf7626c
+      revision: f1c37d3c78062ec517c2db303cad5a2a2d98c347
 
   self:
     path: nrf

@@ -122,7 +122,7 @@ static void discovery_error_found_cb(struct bt_conn *conn,
 	printk("The discovery procedure failed with %d\n", err);
 }
 
-static struct bt_gatt_dm_cb discovery_cb = {
+static const struct bt_gatt_dm_cb discovery_cb = {
 	.completed = discovery_completed_cb,
 	.service_not_found = discovery_service_not_found_cb,
 	.error_found = discovery_error_found_cb,
@@ -290,7 +290,7 @@ static void hids_on_ready(struct k_work *work)
 	while (NULL != (rep = bt_gatt_hids_c_rep_next(&hids_c, rep))) {
 		if (bt_gatt_hids_c_rep_type(rep) ==
 		    BT_GATT_HIDS_C_REPORT_TYPE_INPUT) {
-			printk("Subscribe in report id: %u\n",
+			printk("Subscribe to report id: %u\n",
 			       bt_gatt_hids_c_rep_id(rep));
 			err = bt_gatt_hids_c_rep_subscribe(&hids_c, rep,
 							   hids_c_notify_cb);
@@ -300,7 +300,7 @@ static void hids_on_ready(struct k_work *work)
 		}
 	}
 	if (hids_c.rep_boot.kbd_inp) {
-		printk("Subscribe in boot keyboard report\n");
+		printk("Subscribe to boot keyboard report\n");
 		err = bt_gatt_hids_c_rep_subscribe(&hids_c,
 						   hids_c.rep_boot.kbd_inp,
 						   hids_c_boot_kbd_report);
@@ -309,7 +309,7 @@ static void hids_on_ready(struct k_work *work)
 		}
 	}
 	if (hids_c.rep_boot.mouse_inp) {
-		printk("Subscribe in boot mouse report\n");
+		printk("Subscribe to boot mouse report\n");
 		err = bt_gatt_hids_c_rep_subscribe(&hids_c,
 						   hids_c.rep_boot.mouse_inp,
 						   hids_c_boot_mouse_report);
@@ -472,6 +472,8 @@ static void button_handler(u32_t button_state, u32_t has_changed)
 void main(void)
 {
 	int err;
+
+	printk("Starting HIDS Client example\n");
 
 	bt_gatt_hids_c_init(&hids_c, &hids_c_init_params);
 
