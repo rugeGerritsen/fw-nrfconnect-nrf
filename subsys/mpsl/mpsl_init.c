@@ -17,6 +17,8 @@ LOG_MODULE_REGISTER(mpsl_init, CONFIG_MPSL_LOG_LEVEL);
 	#define MPSL_LOW_PRIO_IRQn SWI5_IRQn
 #elif IS_ENABLED(CONFIG_SOC_SERIES_NRF53X)
 	#define MPSL_LOW_PRIO_IRQn EGU0_IRQn
+#elif IS_ENABLED(CONFIG_SOC_SERIES_BSIM_NRFXX)
+	#define MPSL_LOW_PRIO_IRQn SWI5_EGU5_IRQn
 #endif
 #define MPSL_LOW_PRIO (4)
 
@@ -137,12 +139,18 @@ static int mpsl_lib_init(struct device *dev)
 	}
 #endif
 
+#if IS_ENABLED(CONFIG_SOC_SERIES_BSIM_NRFXX)
+	u32_t flags = 0;
+#else
+	u32_t flags = IRQ_ZERO_LATENCY;
+#endif
+
 	IRQ_DIRECT_CONNECT(TIMER0_IRQn, MPSL_HIGH_IRQ_PRIORITY,
-			   mpsl_timer0_isr_wrapper, IRQ_ZERO_LATENCY);
+			   mpsl_timer0_isr_wrapper, flags);
 	IRQ_DIRECT_CONNECT(RTC0_IRQn, MPSL_HIGH_IRQ_PRIORITY,
-			   mpsl_rtc0_isr_wrapper, IRQ_ZERO_LATENCY);
+			   mpsl_rtc0_isr_wrapper, flags);
 	IRQ_DIRECT_CONNECT(RADIO_IRQn, MPSL_HIGH_IRQ_PRIORITY,
-			   mpsl_radio_isr_wrapper, IRQ_ZERO_LATENCY);
+			   mpsl_radio_isr_wrapper, flags);
 
 	return 0;
 }
