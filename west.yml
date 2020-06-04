@@ -29,6 +29,8 @@ manifest:
       url-base: https://github.com/ThrowTheSwitch
     - name: armmbed
       url-base: https://github.com/ARMmbed
+    - name: ruge
+      url-base: https://github.com/rugeGerritsen
 
   # If not otherwise specified, the projects below should be obtained
   # from the ncs remote.
@@ -45,6 +47,7 @@ manifest:
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/introduction/index.html
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
     - name: zephyr
+      remote: ruge
       repo-path: sdk-zephyr
       revision: v2.3.0-rc1-ncs1-rc2
       import:
@@ -95,9 +98,14 @@ manifest:
       revision: v0.0.1-ncs2-rc2
       path: modules/lib/mcumgr
     - name: nrfxlib
+      remote: ruge
       repo-path: sdk-nrfxlib
       path: nrfxlib
-      revision: pull/209/head
+      revision: 37f7bf950fd2f080955228e6f2c85bec100cf66a
+    - name: hal_nordic
+      repo-path: sdk-hal_nordic
+      path: modules/hal/nordic
+      revision: v1.3.0-rc1
     # Other third-party repositories.
     - name: cmock
       path: test/cmock
