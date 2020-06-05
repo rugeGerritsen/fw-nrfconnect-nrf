@@ -166,7 +166,7 @@ static int mpsl_signal_thread_init(struct device *dev)
 			0, K_NO_WAIT);
 
 	IRQ_CONNECT(MPSL_LOW_PRIO_IRQn, MPSL_LOW_PRIO,
-		    mpsl_low_prio_irq_handler, NULL, 0);
+		    (void*)mpsl_low_prio_irq_handler, NULL, 0);
 
 	return 0;
 }
