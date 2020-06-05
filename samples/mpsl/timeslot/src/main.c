@@ -115,23 +115,24 @@ static mpsl_timeslot_signal_return_param_t *mpsl_timeslot_callback(
 static void mpsl_timeslot_demo(void)
 {
 	int err;
-	char input_char;
+//	char input_char;
 	enum mpsl_timeslot_call api_call;
 
 	printk("-----------------------------------------------------\n");
 	printk("Press a key to open session and request timeslots:\n");
 	printk("* 'a' for a session where each timeslot makes a new request\n");
 	printk("* 'b' for a session with a single timeslot request\n");
-	input_char = console_getchar();
-	printk("%c\n", input_char);
-
-	if (input_char == 'a') {
-		request_in_cb = true;
-	} else if (input_char == 'b') {
-		request_in_cb = false;
-	} else {
-		return;
-	}
+//	input_char = console_getchar();
+//	printk("%c adsf\n", input_char);
+//
+//	if (input_char == 'a') {
+//		request_in_cb = true;
+//	} else if (input_char == 'b') {
+//		request_in_cb = false;
+//	} else {
+//		return;
+//	}
+	request_in_cb = true;
 
 	api_call = OPEN_SESSION;
 	err = k_msgq_put(&mpsl_api_msgq, &api_call, K_FOREVER);
@@ -144,15 +145,15 @@ static void mpsl_timeslot_demo(void)
 	if (err) {
 		error();
 	}
-
-	printk("Press any key to close the session.\n");
-	console_getchar();
-
-	api_call = CLOSE_SESSION;
-	err = k_msgq_put(&mpsl_api_msgq, &api_call, K_FOREVER);
-	if (err) {
-		error();
-	}
+//
+//	printk("Press any key to close the session.\n");
+//	console_getchar();
+//
+//	api_call = CLOSE_SESSION;
+//	err = k_msgq_put(&mpsl_api_msgq, &api_call, K_FOREVER);
+//	if (err) {
+//		error();
+//	}
 }
 
 /* To ensure thread safe operation, call all MPSL APIs from a non-preemptible
@@ -224,18 +225,18 @@ static void console_print_thread(void)
 void main(void)
 {
 
-	int err = console_init();
-
-	if (err) {
-		error();
-	}
+//	int err = console_init();
+//
+//	if (err) {
+//		error();
+//	}
 
 	printk("-----------------------------------------------------\n");
 	printk("             Nordic MPSL Timeslot sample\n");
 
 	while (1) {
 		mpsl_timeslot_demo();
-		k_sleep(K_MSEC(1000));
+		k_sleep(K_FOREVER);
 	}
 }
 
