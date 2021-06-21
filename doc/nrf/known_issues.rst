@@ -1007,6 +1007,26 @@ KRKNWK-8133: CSMA-CA issues
 SoftDevice Controller
 =====================
 
+.. rst-class:: v1-6-0 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0
+
+DRGN-15852: In rare cases on nRF53 Series devices, an assert can occur while scanning
+  This only occurs when the host started scanning using HCI LE Set Scan Enable.
+  This is default configuration of the Bluetooth host.
+
+  **Workaround:** Use extended scanning commands.
+  That is, set :option:`CONFIG_BT_EXT_ADV` to use HCI LE Set Extended Scan Enable instead.
+
+.. rst-class:: v1-6-0 v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0
+
+DRGN-15852: In rare cases on nRF53 Series, the scanner generates corrupted advertising reports
+  The following fields are affected:
+
+  * Event_Type
+  * Address_Type
+  * Direct_Address_Type
+  * TX_Power
+  * Advertising_SID
+
 .. rst-class:: v1-5-0 v1-4-2 v1-4-1 v1-4-0 v1-3-2 v1-3-1 v1-3-0 v1-2-1 v1-2-0 v1-1-0
 
 DRGN-15251: Very rare assertion fault when connected as peripheral on Coded PHY
